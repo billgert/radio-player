@@ -1,3 +1,191 @@
-struct RadioPlayer {
-    var text = "Hello, World!"
+import AVFoundation
+import UIKit.UIImage
+
+extension Notification.Name {
+  static let PlayerDidPlayNotification = Notification.Name("playerDidPlayNotification")
+  static let PlayerDidPauseNotification = Notification.Name("playerDidPauseNotification")
+  static let PlayerDidStopNotification = Notification.Name("playerDidStopNotification")
+  static let PlayerDidUpdateInfoNotification = Notification.Name("playerDidUpdateInfoNotification")
+  static let PlayerDidBeginBufferingNotification = Notification.Name("playerDidBeginBufferingNotification")
+  static let PlayerDidEndBufferingNotification = Notification.Name("playerDidEndBufferingNotification")
+  static let PlayerDidFailNotification = Notification.Name("playerDidFailNotification")
+}
+
+class RadioPlayer {
+  static let shared = RadioPlayer()
+  
+  var isPlaying: Bool {
+    return player.timeControlStatus == .playing
+  }
+  
+  var isPaused: Bool {
+    return player.timeControlStatus == .paused
+  }
+  
+  var item: Item?
+  
+  private var isBuffering = false
+  private var isInterrupted = false
+  private var isConnectedToInternet = true
+  
+  private let player = AVPlayer()
+  
+  private let playbackObserver = PlaybackObserver()
+  private let deviceObserver = DeviceObserver()
+  private let remoteController = RemoteController()
+  
+  // MARK: Initialization
+  
+  init() {
+    playbackObserver.delegate = self
+    deviceObserver.delegate = self
+    remoteController.delegate = self
+    
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playback)
+    } catch {
+      print("AVAudioSession.sharedInstance(): \(error.localizedDescription)")
+    }
+  }
+  
+  // MARK: Public Methods
+  
+  func load(_ item: Item) {
+    self.item = item
+    let playerItem = AVPlayerItem(url: item.streamingUrl)
+    playbackObserver.observePlayerItem(playerItem)
+    player.replaceCurrentItem(with: playerItem)
+  }
+  
+  func stop() {
+    item = nil
+    player.pause()
+    player.replaceCurrentItem(with: nil)
+    remoteController.clearInfo()
+    remoteController.setPlaybackState(.stopped)
+    NotificationCenter.default.post(name: .PlayerDidStopNotification,
+                                    object: self)
+  }
+  
+  func play() {
+    player.play()
+    remoteController.setPlaybackState(.playing)
+    NotificationCenter.default.post(name: .PlayerDidPlayNotification,
+                                    object: self)
+  }
+  
+  func pause() {
+    player.pause()
+    remoteController.setPlaybackState(.paused)
+    NotificationCenter.default.post(name: .PlayerDidPauseNotification,
+                                    object: self)
+  }
+}
+
+// MARK: - PlaybackObserverDelegate
+
+extension RadioPlayer: PlaybackObserverDelegate {
+  func playbackObserver(_ observer: PlaybackObserver, isPlayable playerItem: AVPlayerItem) {
+    if !isPlaying && !isPaused {
+      play()
+    }
+  }
+  
+  func playbackObserver(_ observer: PlaybackObserver, didFail playerItem: AVPlayerItem, error: Error) {
+    NotificationCenter.default.post(name: .PlayerDidFailNotification,
+                                    object: self,
+                                    userInfo: ["error": error])
+    stop()
+  }
+  
+  func playbackObserver(_ observer: PlaybackObserver, notReady playerItem: AVPlayerItem) {
+    print("playbackObserver: playerItemNotReady")
+  }
+  
+  func playbackObserver(_ observer: PlaybackObserver, didStartBuffering playerItem: AVPlayerItem) {
+    NotificationCenter.default.post(name: .PlayerDidBeginBufferingNotification,
+                                    object: self)
+    if playerItem.isPlaybackBufferEmpty {
+      remoteController.setPlaybackState(.interrupted)
+      guard let item = self.item else { return }
+      load(item)
+    }
+    isBuffering = true
+  }
+  
+  func playbackObserver(_ observer: PlaybackObserver, didFinishBuffering playerItem: AVPlayerItem) {
+    NotificationCenter.default.post(name: .PlayerDidEndBufferingNotification,
+                                    object: self)
+    if isPaused && isBuffering {
+      play()
+      guard let item = self.item else { return }
+      remoteController.setTitle(item.name)
+      remoteController.setArtist(item.description)
+      Downloader.image(for: item.imageUrl) { image in
+        let image = image ?? UIImage(named: "Placeholder")!
+        self.remoteController.setImage(image)
+      }
+    }
+    isBuffering = false
+  }
+  
+  func playbackObserver(_ observer: PlaybackObserver, didUpdate metaDataItem: [AVMetadataItem]) {
+    if let title = metaDataItem.first?.stringValue {
+      self.remoteController.setTitle(title)
+    }
+  }
+}
+
+// MARK: - DeviceObserverDelegate
+
+extension RadioPlayer: DeviceObserverDelegate {
+  func deviceObserverDidBeginInterruption(_ observer: DeviceObserver) {
+    isInterrupted = true
+  }
+  
+  func deviceObserver(_ observer: DeviceObserver, didEndInterruptionWithOptions options: AVAudioSession.InterruptionOptions) {
+    if isInterrupted {
+      play()
+    }
+    isInterrupted = false
+  }
+  
+  func deviceObserverDidConnectHeadPhones(_ observer: DeviceObserver) {
+    print("deviceObserverDidConnectHeadPhones")
+  }
+  
+  func deviceObserverDidDisconnectHeadPhones(_ observer: DeviceObserver) {
+    if isPlaying {
+      pause()
+    }
+  }
+}
+
+// MARK: - RemoteControllerDelegate
+
+extension RadioPlayer: RemoteControllerDelegate {
+  func remoteControllerDidReceivePlayCommand(_ remoteController: RemoteController) {
+    play()
+  }
+  
+  func remoteControllerDidReceivePauseCommand(_ remoteController: RemoteController) {
+    pause()
+  }
+  
+  func remoteController(_ remoteController: RemoteController, didUpdate nowPlayingInfo: [String : Any]?) {
+    NotificationCenter.default.post(name: .PlayerDidUpdateInfoNotification,
+                                    object: self,
+                                    userInfo: nowPlayingInfo)
+  }
+}
+
+// MARK: - Models
+
+extension RadioPlayer {
+  struct Item {
+    let name: String
+    let description: String
+    let streamingUrl: URL
+    let imageUrl: URL?
+  }
 }
