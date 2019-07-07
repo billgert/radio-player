@@ -1,2 +1,3 @@
-# radio-player-apple
-A component for radio playback on Apple devices
+# RadioPlayer
+
+A description of this package.
