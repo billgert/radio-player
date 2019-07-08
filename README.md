@@ -1,6 +1,6 @@
 # RadioPlayer
 
-This package is a native RadioPlayer for iOS and coming soon to iPadOS, watchOS, tvOS and macOS.
+This Swift Package is a native radio player for iOS and coming soon to iPadOS, watchOS, tvOS and macOS. Install by going to Xcode -> File -> Swift Packages -> Add Package Dependency and follow the instructions.
 
 ## Examples
 
@@ -8,7 +8,7 @@ Here follows some examples on how to use RadioPlayer on different platforms.
 
 #### iOS
 
-Use shared instance: `RadioPlayer.shared` if that makes sense for your app.
+Use shared instance `RadioPlayer.shared` if that makes sense for your app.
 
 ```swift
 import UIKit
