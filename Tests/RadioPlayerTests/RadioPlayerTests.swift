@@ -1,12 +1,10 @@
 import XCTest
 @testable import RadioPlayer
 
+@available(iOS 10.0, *)
 final class RadioPlayerTests: XCTestCase {
     func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(RadioPlayer().text, "Hello, World!")
+        XCTAssertEqual(RadioPlayer().isPlaying, false)
     }
 
     static var allTests = [
