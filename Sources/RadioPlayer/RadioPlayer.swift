@@ -117,8 +117,8 @@ extension RadioPlayer: PlaybackObserverDelegate {
       guard let item = self.item else { return }
       remoteController.setTitle(item.name)
       remoteController.setArtist(item.description)
-      Downloader.image(for: item.imageUrl) { image in
-        let image = image ?? UIImage(named: "Placeholder")!
+      Downloader.image(for: item.image.url) { image in
+        let image = image ?? item.image.placeholder
         self.remoteController.setImage(image)
       }
     }
