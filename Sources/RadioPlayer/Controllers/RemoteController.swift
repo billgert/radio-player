@@ -15,7 +15,7 @@ class RemoteController {
   private var nowPlayingInfo: [String: Any]? = [:] {
     didSet {
       nowPlayingInfoCenter.nowPlayingInfo = nowPlayingInfo
-      notifyListeners()
+      delegate?.remoteController(self, didUpdate: nowPlayingInfo)
     }
   }
   
@@ -51,10 +51,6 @@ class RemoteController {
       requestHandler: { _ in
         return image
     })
-  }
-  
-  private func notifyListeners() {
-    delegate?.remoteController(self, didUpdate: nowPlayingInfoCenter.nowPlayingInfo)
   }
   
   // MARK: Public Methods

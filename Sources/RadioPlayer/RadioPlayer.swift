@@ -14,19 +14,15 @@ public extension Notification.Name {
 public class RadioPlayer {
   static let shared = RadioPlayer()
   
-  var isPlaying: Bool {
-    return player.timeControlStatus == .playing
-  }
-  
-  var isPaused: Bool {
-    return player.timeControlStatus == .paused
-  }
-  
   var item: RadioPlayerItem?
+  
+  var isPlaying: Bool { return player.timeControlStatus == .playing }
+  var isPaused: Bool { return player.timeControlStatus == .paused }
+  
+  private let notificationCenter = NotificationCenter.default
   
   private var isBuffering = false
   private var isInterrupted = false
-  private var isConnectedToInternet = true
   
   private let player = AVPlayer()
   
@@ -62,20 +58,20 @@ public class RadioPlayer {
     player.pause()
     player.replaceCurrentItem(with: nil)
     remoteController.clearInfo()
-    NotificationCenter.default.post(name: .PlayerDidStopNotification,
-                                    object: self)
+    notificationCenter.post(name: .PlayerDidStopNotification,
+                            object: self)
   }
   
   public func play() {
     player.play()
-    NotificationCenter.default.post(name: .PlayerDidPlayNotification,
-                                    object: self)
+    notificationCenter.post(name: .PlayerDidPlayNotification,
+                            object: self)
   }
   
   public func pause() {
     player.pause()
-    NotificationCenter.default.post(name: .PlayerDidPauseNotification,
-                                    object: self)
+    notificationCenter.post(name: .PlayerDidPauseNotification,
+                            object: self)
   }
 }
 
@@ -89,9 +85,9 @@ extension RadioPlayer: PlaybackObserverDelegate {
   }
   
   func playbackObserver(_ observer: PlaybackObserver, didFail playerItem: AVPlayerItem, error: Error) {
-    NotificationCenter.default.post(name: .PlayerDidFailNotification,
-                                    object: self,
-                                    userInfo: ["error": error])
+    notificationCenter.post(name: .PlayerDidFailNotification,
+                            object: self,
+                            userInfo: ["error": error])
     stop()
   }
   
@@ -100,8 +96,8 @@ extension RadioPlayer: PlaybackObserverDelegate {
   }
   
   func playbackObserver(_ observer: PlaybackObserver, didStartBuffering playerItem: AVPlayerItem) {
-    NotificationCenter.default.post(name: .PlayerDidBeginBufferingNotification,
-                                    object: self)
+    notificationCenter.post(name: .PlayerDidBeginBufferingNotification,
+                            object: self)
     if playerItem.isPlaybackBufferEmpty {
       guard let item = self.item else { return }
       load(item)
@@ -110,8 +106,8 @@ extension RadioPlayer: PlaybackObserverDelegate {
   }
   
   func playbackObserver(_ observer: PlaybackObserver, didFinishBuffering playerItem: AVPlayerItem) {
-    NotificationCenter.default.post(name: .PlayerDidEndBufferingNotification,
-                                    object: self)
+    notificationCenter.post(name: .PlayerDidEndBufferingNotification,
+                            object: self)
     if isPaused && isBuffering {
       play()
       guard let item = self.item else { return }
@@ -127,7 +123,7 @@ extension RadioPlayer: PlaybackObserverDelegate {
   
   func playbackObserver(_ observer: PlaybackObserver, didUpdate metaDataItem: [AVMetadataItem]) {
     if let title = metaDataItem.first?.stringValue {
-      self.remoteController.setTitle(title)
+      remoteController.setTitle(title)
     }
   }
 }
@@ -169,8 +165,8 @@ extension RadioPlayer: RemoteControllerDelegate {
   }
   
   func remoteController(_ remoteController: RemoteController, didUpdate nowPlayingInfo: [String : Any]?) {
-    NotificationCenter.default.post(name: .PlayerDidUpdateInfoNotification,
-                                    object: self,
-                                    userInfo: nowPlayingInfo)
+    notificationCenter.post(name: .PlayerDidUpdateInfoNotification,
+                            object: self,
+                            userInfo: nowPlayingInfo)
   }
 }
