@@ -1,7 +1,7 @@
 import AVFoundation
 import UIKit.UIImage
 
-extension Notification.Name {
+public extension Notification.Name {
   static let PlayerDidPlayNotification = Notification.Name("playerDidPlayNotification")
   static let PlayerDidPauseNotification = Notification.Name("playerDidPauseNotification")
   static let PlayerDidStopNotification = Notification.Name("playerDidStopNotification")
@@ -11,7 +11,8 @@ extension Notification.Name {
   static let PlayerDidFailNotification = Notification.Name("playerDidFailNotification")
 }
 
-class RadioPlayer {
+@available(iOS 10.0, *)
+public class RadioPlayer {
   static let shared = RadioPlayer()
   
   var isPlaying: Bool {
@@ -22,7 +23,7 @@ class RadioPlayer {
     return player.timeControlStatus == .paused
   }
   
-  var item: Item?
+  var item: RadioPlayerItem?
   
   private var isBuffering = false
   private var isInterrupted = false
@@ -36,7 +37,7 @@ class RadioPlayer {
   
   // MARK: Initialization
   
-  init() {
+  public init() {
     playbackObserver.delegate = self
     deviceObserver.delegate = self
     remoteController.delegate = self
@@ -48,35 +49,32 @@ class RadioPlayer {
     }
   }
   
-  // MARK: Public Methods
+  // MARK: Actions
   
-  func load(_ item: Item) {
+  public func load(_ item: RadioPlayerItem) {
     self.item = item
     let playerItem = AVPlayerItem(url: item.streamingUrl)
     playbackObserver.observePlayerItem(playerItem)
     player.replaceCurrentItem(with: playerItem)
   }
   
-  func stop() {
+  public func stop() {
     item = nil
     player.pause()
     player.replaceCurrentItem(with: nil)
     remoteController.clearInfo()
-    remoteController.setPlaybackState(.stopped)
     NotificationCenter.default.post(name: .PlayerDidStopNotification,
                                     object: self)
   }
   
-  func play() {
+  public func play() {
     player.play()
-    remoteController.setPlaybackState(.playing)
     NotificationCenter.default.post(name: .PlayerDidPlayNotification,
                                     object: self)
   }
   
-  func pause() {
+  public func pause() {
     player.pause()
-    remoteController.setPlaybackState(.paused)
     NotificationCenter.default.post(name: .PlayerDidPauseNotification,
                                     object: self)
   }
@@ -84,6 +82,7 @@ class RadioPlayer {
 
 // MARK: - PlaybackObserverDelegate
 
+@available(iOS 10.0, *)
 extension RadioPlayer: PlaybackObserverDelegate {
   func playbackObserver(_ observer: PlaybackObserver, isPlayable playerItem: AVPlayerItem) {
     if !isPlaying && !isPaused {
@@ -106,7 +105,6 @@ extension RadioPlayer: PlaybackObserverDelegate {
     NotificationCenter.default.post(name: .PlayerDidBeginBufferingNotification,
                                     object: self)
     if playerItem.isPlaybackBufferEmpty {
-      remoteController.setPlaybackState(.interrupted)
       guard let item = self.item else { return }
       load(item)
     }
@@ -138,6 +136,7 @@ extension RadioPlayer: PlaybackObserverDelegate {
 
 // MARK: - DeviceObserverDelegate
 
+@available(iOS 10.0, *)
 extension RadioPlayer: DeviceObserverDelegate {
   func deviceObserverDidBeginInterruption(_ observer: DeviceObserver) {
     isInterrupted = true
@@ -163,6 +162,7 @@ extension RadioPlayer: DeviceObserverDelegate {
 
 // MARK: - RemoteControllerDelegate
 
+@available(iOS 10.0, *)
 extension RadioPlayer: RemoteControllerDelegate {
   func remoteControllerDidReceivePlayCommand(_ remoteController: RemoteController) {
     play()
@@ -176,16 +176,5 @@ extension RadioPlayer: RemoteControllerDelegate {
     NotificationCenter.default.post(name: .PlayerDidUpdateInfoNotification,
                                     object: self,
                                     userInfo: nowPlayingInfo)
-  }
-}
-
-// MARK: - Models
-
-extension RadioPlayer {
-  struct Item {
-    let name: String
-    let description: String
-    let streamingUrl: URL
-    let imageUrl: URL?
   }
 }

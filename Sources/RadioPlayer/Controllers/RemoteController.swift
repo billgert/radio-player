@@ -1,11 +1,13 @@
 import MediaPlayer
 
+@available(iOS 10.0, *)
 protocol RemoteControllerDelegate: class {
   func remoteControllerDidReceivePlayCommand(_ remoteController: RemoteController)
   func remoteControllerDidReceivePauseCommand(_ remoteController: RemoteController)
   func remoteController(_ remoteController: RemoteController, didUpdate nowPlayingInfo: [String: Any]?)
 }
 
+@available(iOS 10.0, *)
 class RemoteController {
   weak var delegate: RemoteControllerDelegate?
   
@@ -73,9 +75,5 @@ class RemoteController {
   
   func setImage(_ image: UIImage) {
     nowPlayingInfo?[MPMediaItemPropertyArtwork] = artworkForImage(image)
-  }
-  
-  func setPlaybackState(_ state: MPNowPlayingPlaybackState) {
-    nowPlayingInfoCenter.playbackState = state
   }
 }
