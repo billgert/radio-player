@@ -1,13 +1,11 @@
 import MediaPlayer
 
-@available(iOS 10.0, *)
 protocol RemoteControllerDelegate: class {
   func remoteControllerDidReceivePlayCommand(_ remoteController: RemoteController)
   func remoteControllerDidReceivePauseCommand(_ remoteController: RemoteController)
   func remoteController(_ remoteController: RemoteController, didUpdate nowPlayingInfo: [String: Any]?)
 }
 
-@available(iOS 10.0, *)
 class RemoteController {
   weak var delegate: RemoteControllerDelegate?
   

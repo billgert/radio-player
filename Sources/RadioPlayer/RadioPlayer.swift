@@ -11,7 +11,6 @@ public extension Notification.Name {
   static let PlayerDidFailNotification = Notification.Name("playerDidFailNotification")
 }
 
-@available(iOS 10.0, *)
 public class RadioPlayer {
   static let shared = RadioPlayer()
   
@@ -82,7 +81,6 @@ public class RadioPlayer {
 
 // MARK: - PlaybackObserverDelegate
 
-@available(iOS 10.0, *)
 extension RadioPlayer: PlaybackObserverDelegate {
   func playbackObserver(_ observer: PlaybackObserver, isPlayable playerItem: AVPlayerItem) {
     if !isPlaying && !isPaused {
@@ -136,7 +134,6 @@ extension RadioPlayer: PlaybackObserverDelegate {
 
 // MARK: - DeviceObserverDelegate
 
-@available(iOS 10.0, *)
 extension RadioPlayer: DeviceObserverDelegate {
   func deviceObserverDidBeginInterruption(_ observer: DeviceObserver) {
     isInterrupted = true
@@ -162,7 +159,6 @@ extension RadioPlayer: DeviceObserverDelegate {
 
 // MARK: - RemoteControllerDelegate
 
-@available(iOS 10.0, *)
 extension RadioPlayer: RemoteControllerDelegate {
   func remoteControllerDidReceivePlayCommand(_ remoteController: RemoteController) {
     play()
