@@ -12,12 +12,12 @@ public extension Notification.Name {
 }
 
 public class RadioPlayer {
-  static let shared = RadioPlayer()
+  public static let shared = RadioPlayer()
   
-  var item: RadioPlayerItem?
+  public var item: RadioPlayerItem?
   
-  var isPlaying: Bool { return player.timeControlStatus == .playing }
-  var isPaused: Bool { return player.timeControlStatus == .paused }
+  public var isPlaying: Bool { return player.timeControlStatus == .playing }
+  public var isPaused: Bool { return player.timeControlStatus == .paused }
   
   private let notificationCenter = NotificationCenter.default
   
